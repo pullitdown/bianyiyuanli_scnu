@@ -2,6 +2,7 @@
 use std;
 int8 __main__()
 begin
+    int8 k=122
     int8 a=1
     int8 b=2
     int8 c=a+b
