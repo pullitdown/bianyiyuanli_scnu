@@ -2,10 +2,11 @@
 use std;
 int8 __main__()
 begin
-    int8 k=122
-    int8 a=1
-    int8 b=2
-    int8 c=a+b
-    pyout<<c<<pyend
-    callback 0
+    int8 k=122;
+    int4 a=1;
+    int16 b=2;
+    int8 c=a+b;
+    float oo=1.2323;
+    pyout<<c<<pyend;
+    callback 0;
 end
