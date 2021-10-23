@@ -433,6 +433,10 @@ void scanner(string str, int file_type = 0) //…®√Ë√ø“ª––,file_type±Ì√˜ «…®√Ëc++Œ
             last_start = 256 + last_start;
             cout << last_start << endl;
         }
+
+
+
+
         if (now_char >= 48 && now_char <= 57) //»Áπ˚ « ˝◊÷
         {
             now_type[1] = '3';
