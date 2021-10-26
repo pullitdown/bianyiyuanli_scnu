@@ -4,14 +4,30 @@
 #include<string.h>
 #include<vector>
 #include<stack>
+#include<queue>
+#include<set>
 #include<algorithm>
 using namespace std;
 
 //---------------------ÕıÔò±í´ïÊ½µÄ·Ö´Ê²¿·Ö------------------------------
 //·Ö´Ê¹æÔò±í
+//charÀàĞÍ:¿Õ¸ñ:0 ×ÖÄ¸:1 ·ûºÅ:2 Êı:3
+//stringÀàĞÍ:¿Õ»òĞĞÄ©:0,±äÁ¿Ãû:1 ÌØÊâ·ûºÅ:2 Êı×Ö:3 ×Ö·û´®:4 ¹Ø¼ü×Ö:5 ×Ö·û:6 ×¢ÊÍ:7
+
 char syntaxTable_RegularExpressions[100][6]=
 {
-
+    "01110", //¿Õµ½×ÖÄ¸µÄ¼ä¶Ï
+    "0_110", //¿ªÊ¼µ½_µÄ¼ä¶Ï,Ê××ÖÄ¸²»ÎªÊı×Ö
+    "11100", //±äÁ¿ÃûµÄÑÓĞø,¿ÉÒÔ³Ğ½Ó_,Êı×Ö
+    "1_100", //±äÁ¿Ãûµ½_µÄÑÓĞø
+    "13100", //±äÁ¿Ãûµ½Êı×ÖÑÓĞø
+    "10010", //±äÁ¿Ãûµ½¿Õ¸ñµÄ¼ä¶Ï
+    "1((10", //±äÁ¿Ãûµ½(µÄ¼ä¶Ï
+    "(1110", //(µ½×ÖÄ¸µÄ¼ä¶Ï
+    "1||10", //×ÖÄ¸µ½|µÄ¼ä¶Ï
+    "1))10", //×ÖÄ¸µ½)µÄ¼ä¶Ï
+    "|1110", //|µ½×ÖÄ¸µÄ¼ä¶Ï
+    ")**10", //)µ½*µÄ¼ä¶Ï
 };
 int len_check_table = sizeof(syntaxTable_RegularExpressions) / sizeof(syntaxTable_RegularExpressions[0]);
 int nextTypeIndex0[200];//ÓÃÀ´¼ÇÂ¼ Ä³¸ö´ÊÀàÔÚ´Ê·¨±íÖĞÊ×´Î³öÏÖµÄÏÂ±ê
@@ -46,7 +62,7 @@ void init_table(int file_type = 0)//°ÑÓï·¨¹æÔò±í½øĞĞÅÅĞò,²¢ÇÒ»ñµÃ²»Í¬Óï·¨¹æÔòµÄ³
 
 void scanner(string str, int file_type = 0) //É¨ÃèÃ¿Ò»ĞĞ,file_type±íÃ÷ÊÇÉ¨Ãèc++ÎÄ¼ş(file_type=0) »¹ÊÇ ×Ô¶¨ÒåÓïÑÔÎÄ¼ş(file_type=1)
 {
-    int* nextTypeIndex = = nextTypeIndex0;
+    int* nextTypeIndex = nextTypeIndex0;
     unsigned int last_start = 0;//¼ÇÂ¼±¾´ÎµÄÆ¥ÅäÓï·¨¹æÔò,Ïà³Ğ½ÓµÄÏÂÒ»´Î¹æÔòÆğÊ¼µã
     char(*all_check_table)[6] = syntaxTable_RegularExpressions;
     int len_all_check_table =  len_check_table ;
@@ -63,7 +79,7 @@ void scanner(string str, int file_type = 0) //É¨ÃèÃ¿Ò»ĞĞ,file_type±íÃ÷ÊÇÉ¨Ãèc++Î
         if (last_start < 0)
         {
             last_start = 256 + last_start;
-            cout << last_start << endl;
+            //cout << last_start << endl;
         }
         if (now_char >= 48 && now_char <= 57) //Èç¹ûÊÇÊı×Ö
         {
@@ -106,6 +122,7 @@ void scanner(string str, int file_type = 0) //É¨ÃèÃ¿Ò»ĞĞ,file_type±íÃ÷ÊÇÉ¨Ãèc++Î
             else if (now_char == '(')now_type[1] = '(';
             else if (now_char == '_')now_type[1] = '_';
             else if (now_char == ')')now_type[1] = ')';
+            else if (now_char == '|')now_type[1] = '|';
             else if (now_char == '*')
             now_type[1] = '*';
             else if (now_char == '/')
@@ -165,89 +182,254 @@ void scanner(string str, int file_type = 0) //É¨ÃèÃ¿Ò»ĞĞ,file_type±íÃ÷ÊÇÉ¨Ãèc++Î
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 //-----------------------------------------------------------------------------------------
 //confirmation syntax execution order
 
 typedef class _node{
 public:
-    vector<int> numlist;//½ÚµãµÄÏÂ±ê
-    vector<pair<string,int>> link;//½ÚµãµÄÂ·¾¶
-    int lenLink;
-    _node(int index)
+    vector<pair<string,int>> link;//½ÚµãµÄÂ·¾¶,Èç¹ûintÎª-1,¼´ÎªÖÕÖ¹×´Ì¬
+    void pushLink(string data,int nextNodeIndex)
     {
-        lenLink=0;
-        numlist.push_back(index);
+        pair<string,int> tempLink;
+        tempLink.first=data;
+        tempLink.second=nextNodeIndex;
+        link.push_back(tempLink);
+    }
+    virtual void deleteNode()
+    {
+        link.clear();
     }
 }*node;
-struct _node tree[200];
-stack<char> symStack;//·ûºÅÕ»
-stack<node> nodeStack;//½ÚµãÕ»
+_node nodeArr[200];//´æ·Å½Úµã
+int nowNodeNum;//¼ÇÂ¼µ±Ç°
 
-int isp(char a)
+typedef class _nodeDFA :public _node
+{
+public:
+    int isTheEnd;
+
+    set<int> numList;//½ÚµãµÄÏÂ±ê¼¯ºÏ
+    void pushNode(int index)
+    {
+        numList.insert(index);
+    }
+    bool cmpWithSet(const nodeDFA a,const nodeDFA b)
+    {
+        return a->numList==b->numList;
+    }
+    virtual void deleteNode()
+    {
+        link.clear();
+        numList.clear();
+    }
+}*nodeDFA;
+_nodeDFA nodeDFAArr[100];//´æ·Å½Úµã
+int nowNodeDFANum;
+void deletearr(node a){
+    a->deleteNode();
+}
+
+typedef class _tree{
+public:
+    int front;
+    int end;
+    _tree(int f,int e):front(f),end(e){}
+    void copyTree(int fromNodeIdx,int toNodeIdx)//½«Á´±íÄÚµÄÒ»´®½Úµã¸´ÖÆµ½ĞÂµÄÏÂ±ê
+    {
+        bfs(fromNodeIdx,findminmax);
+        cout<<minmax.first<<" "<<minmax.second<<endl;
+        int bias=nowNodeNum-minmax.first;
+        
+
+    }
+    pair<int,int> minmax;
+
+    void findminmax(int nowIndex)
+    {
+        if(nowIndex<minmax.first)minmax.first=nowIndex;
+        if(nowIndex>minmax.second)minmax.second=nowIndex;
+    }
+    void bfs(int fromNodeIdx,void (_tree::*func)(int nowIndex))
+    {
+        if(func==findminmax){
+            this->minmax.first=10000;
+            this->minmax.second=0;
+        }
+        set<int> isVisited;
+        queue<int> que;
+        int p;
+        que.push(fromNodeIdx);
+        while (!que.empty()&&p==-1)
+        {
+            p=que.front();que.pop();
+            if( isVisited.count(p)>=1){
+                p=-1;
+                continue;
+            }
+            isVisited.insert(p);
+            func(p);
+            for(int i=0;i<nodeArr[p].link.size();i++)
+            {
+                que.push(nodeArr[p].link[i].second);
+            }
+        }
+    }
+}*tree;//¼È¿ÉÒÔ±íÊ¾nfaÊ÷,Ò²¿ÉÒÔ±íÊ¾dfaÊ÷
+
+stack<char> symStack;//·ûºÅÕ»
+stack<tree> treeStack;//½ÚµãÕ»
+//·ûºÅÓÅÏÈ¼¶µÄÖ´ĞĞ¹æÔò
+//Èç¹ûÕ»ÍâµÄ·ûºÅÓÅÏÈ¼¶Ğ¡ÓÚÕ»ÄÚÓÅÏÈ¼¶,´Ó·ûºÅÕ»ÄÃ³öÒ»¸ö·ûºÅ,
+//´Ó±äÁ¿Õ»ÄÃ³öÁ½¸ö±äÁ¿,½øĞĞÏàÓ¦²Ù×÷,
+//Èç¹ûÕ»ÍâµÄ·ûºÅÓÅÏÈ¼¶´óÓÚÕ»ÄÚÓÅÏÈ¼¶,Ôò¼ÌĞø°Ñ¸Ã·ûºÅ·ÅÈë·ûºÅÕ»
+int isp(char a)//Õ»ÄÚÓÅÏÈ¼¶±ğ
 {
 	switch (a)
 	{
 
 	case '+':
-	case '-':return 3;
+	case '-':return 3;//Ò»°ã±ÈÍâÃæµÄÏàÍ¬·ûºÅ¶àÒ»¼¶,ÇãÏò°ÑÕ»ÄÚµÄ·ûºÅ½øĞĞ¼ÆËã
 	case '*':
 	case '/':
 	case '%':return 5;
-	case '(':return 1;
+	case '(':return 1;//ÔÚÕ»ÄÚ(Ó¦¸Ã¾¡Á¿Ğ¡
 
-	case ')':return 6;
+	case ')':return 6;//ÆäÊµ¿ÉÒÔ²»ÓÃÕâ¸ö,ÒòÎª')'²»»áÈëÕ»,¶øÊÇÖ±½ÓÖ´ĞĞµ½ÉÏÒ»¸ö
 	default:return 0;
 	}
 }
-int icp(char a)
+int icp(char a)//Õ»ÍâÓÅÏÈ¼¶±ğ,ÓÅÏÈ¼¶ÊÇÕë¶ÔË«Ä¿ÔËËã·ûµÄ,µ¥Ä¿ÔËËã·ûÊÇÖ±½ÓÖ´ĞĞµÄ
 {
 	switch (a)
 	{
 	case '+':
-	case '-':return 2;
 	case '*':
-	case '/':
-	case '%':return 4;
+	case '?':return 2;
+    case '-':
+	case '[':return 6;
+	case ']':return 1; 
 	case '(':return 6;
 	case ')':return 1;
 	default:return 0;
 	}
 }
 
-
-void operateBysym(char sym,vector<node> arr)
+node operateBysym_3(char sym)
 {
-    if()
+
+}
+
+node operateBysym_2(char sym)
+{
+    
+}
+
+node operateBysym_1(char sym)
+{
+    tree operateNode=treeStack.top();treeStack.pop();//°Ñ½ÚµãÈ¡³ö
+    if(sym=='?')
+    {
+        nodeArr[nowNodeNum].pushLink("",operateNode->front);//½«Ô­ÓĞµÄÍ·Á¬½ÓĞÂÍ·
+        operateNode->front=nowNodeNum;//¸üĞÂÍ·½Úµã
+        nodeArr[operateNode->end].pushLink("",nowNodeNum+1);//½«Ô­ÓĞµÄÎ²Á¬½ÓĞÂÎ²
+        operateNode->end=nowNodeNum+1;//¸üĞÂÎ²½Úµã
+        nodeArr[nowNodeNum].pushLink("",operateNode->end);//½«Í·½ÚµãÖ±½ÓÁ¬µ½ĞÂÎ²½Úµã
+        nowNodeNum+=2;//½«½ÚµãÊıÖÃÎª±ê¼Ç¹ıµÄ½ÚµãÏÂ±ê
+    }
+    if(sym=='*')
+    {
+        nodeArr[operateNode->end].pushLink("",operateNode->front);//½«Ô­ÓĞµÄÎ²Á¬½ÓÎ²
+        nodeArr[nowNodeNum].pushLink("",operateNode->front);//½«ĞÂµÄÍ·Á¬½ÓÔ­ÓĞµÄÍ·
+        operateNode->front=nowNodeNum;//¸üĞÂÍ·½Úµã
+        nodeArr[operateNode->end].pushLink("",nowNodeNum+1);//½«Ô­ÓĞµÄÎ²Á¬½ÓĞÂÎ²
+        operateNode->end=nowNodeNum+1;//¸üĞÂÎ²½Úµã
+        nodeArr[nowNodeNum].pushLink("",operateNode->end);//½«Í·½ÚµãÖ±½ÓÁ¬µ½ĞÂÎ²½Úµã
+        nowNodeNum+=2;//½«½ÚµãÊıÖÃÎª±ê¼Ç¹ıµÄ½ÚµãÏÂ±ê
+    }
+    if(sym=='+')
+    {
+        
+        nodeArr[operateNode->end].pushLink("",operateNode->front);//½«Ô­ÓĞµÄÎ²Á¬½ÓÎ²
+        nodeArr[nowNodeNum].pushLink("",operateNode->front);//½«ĞÂµÄÍ·Á¬½ÓÔ­ÓĞµÄÍ·
+        operateNode->front=nowNodeNum;//¸üĞÂÍ·½Úµã
+        nodeArr[operateNode->end].pushLink("",nowNodeNum+1);//½«Ô­ÓĞµÄÎ²Á¬½ÓĞÂÎ²
+        operateNode->end=nowNodeNum+1;//¸üĞÂÎ²½Úµã
+        nodeArr[nowNodeNum].pushLink("",operateNode->end);//½«Í·½ÚµãÖ±½ÓÁ¬µ½ĞÂÎ²½Úµã
+        nowNodeNum+=2;//½«½ÚµãÊıÖÃÎª±ê¼Ç¹ıµÄ½ÚµãÏÂ±ê
+        nodeArr[nowNodeNum]
+    }
+    treeStack.push(operateNode);
+    
 }
 
 void pushvstrs()
 {
-    int nodeIndex=0;
+    nowNodeNum=0;//³õÊ¼½ÚµãÊıÁ¿
+    char tempChar,symStackTopchar;
     int lenVstrs=vstrs.size();
     for(int i=0;i<lenVstrs;i++)
     {
         if(vstrs[i].second=='1')
         {
-            node nodeptr=new _node(nodeIndex);//Í¨¹ınodeIndex³õÊ¼»¯½ÚµãÖµ
+            nodeArr[nowNodeNum].pushLink(vstrs[i].first,nowNodeNum+1);//ºÍÏÂÒ»¸ö½ÚµãÁ¬½ÓÆğÀ´
+            tree mytree=new _tree(nowNodeNum,++nowNodeNum);//½«Í·ºÍÎ²Á¬½ÓÆğÀ´
+            nowNodeNum++;
+            treeStack.push(mytree);
         }
         else{
-            if(vstrs[i].first=="|"){
-                operateBysym()
+            tempChar=vstrs[i].first[0];
+            symStackTopchar=symStack.top();
+            if(tempChar=='*'||tempChar=='+'||tempChar=='?')//Èç¹ûÊÇµ¥Ä¿ÔËËã·û
+            {
+                operateBysym_1(tempChar);
             }
-            else if(vstrs[i].first=="("){
+            else if(tempChar=='^'||tempChar=='-')//Èç¹ûÊÇ·¶Î§ÔËËã·û
+            {
+                symStack.push(tempChar);//½«µ±Ç°µÄ·¶Î§ÏŞ¶¨·ûºÅÈëÕ»
+                continue;
             }
-            else if(vstrs[i].first==")"){
+            else if(icp(tempChar)>isp(symStackTopchar))//Èç¹ûÊÇË«Ä¿ÔËËã·û
+            {
+                symStack.push(tempChar);//½«µ±Ç°µÄ·ûºÅÈëÕ»
+                continue;
             }
-            else if(vstrs[i].first=="["){
+            else if(icp(tempChar)<isp(symStackTopchar) && tempChar != ')' && tempChar != ']')
+            {
+                while(icp(tempChar)<isp(symStackTopchar))
+                {
+                    operateBysym_2(tempChar);
+                }
             }
-            else if(vstrs[i].first==""){
+            else if(tempChar != ')')//Èç¹ûÊÇ),ÄÇÃ´Ö±µ½(²Å½áÊø
+            {
+                char aa=symStack.top();symStack.pop();
+                while(aa!='(')
+                {
+                    operateBysym_1(aa);
+                    aa=symStack.top();symStack.pop();
+                }
             }
-            else if(vstrs[i].first=="*"){
-            }
-            else if(vstrs[i].first=="?"){
-            }
-            else{
-
+            else if(tempChar != ']')//Èç¹ûÊÇ],ÄÇÃ´Ö±µ½[²Å½áÊø
+            {
+                char aa=symStack.top();symStack.pop();
+                while(aa!='[')
+                {
+                    operateBysym_3(aa);
+                    aa=symStack.top();symStack.pop();
+                }
             }
         }
     }
@@ -255,12 +437,35 @@ void pushvstrs()
 //-----------------------------------------------------------------------------------------
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main(){
-    string regularExpressions="";//ÕıÔò±í´ïÊ½
-    cin>>regularExpressions;
-    int len_regularExpressions=regularExpressions.size();
-    for(int i=0;i<len_regularExpressions;i++)
+    string regularExpressions="digtal(char|digtal)*";//ÕıÔò±í´ïÊ½
+    //cin>>regularExpressions;
+    init_table();
+    scanner(regularExpressions);
+    int len_vstrs=vstrs.size();
+    for(int i=0;i<len_vstrs;i++)
     {
-        
+        cout<<vstrs[i].first<<" "<<vstrs[i].second <<endl;
     }
+    system("pause");
 }
